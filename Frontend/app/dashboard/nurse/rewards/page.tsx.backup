@@ -1,0 +1,268 @@
+﻿'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth-context';
+import { getTasks } from '@/lib/storage';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Trophy, Star, Flame, Award, TrendingUp, Target, Zap, Heart, AlertTriangle } from 'lucide-react';
+
+export default function NurseRewardsPage() {
+  const { user } = useAuth();
+  const [points, setPoints] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [badgeLevel, setBadgeLevel] = useState('Bronze');
+
+  useEffect(() => {
+    if (user) {
+      const completedTasks = getTasks().filter(
+        t => t.assignedTo === user.id && t.status === 'completed'
+      );
+      
+      let totalPoints = 0;
+      completedTasks.forEach(task => {
+        if (task.priority === 'critical') {
+          totalPoints += 20;
+        } else {
+          totalPoints += 10;
+        }
+      });
+      
+      setPoints(totalPoints);
+      
+      if (totalPoints >= 500) setBadgeLevel('Platinum');
+      else if (totalPoints >= 300) setBadgeLevel('Gold');
+      else if (totalPoints >= 150) setBadgeLevel('Silver');
+      else setBadgeLevel('Bronze');
+      
+      setStreak(Math.floor(Math.random() * 15) + 1);
+    }
+  }, [user]);
+
+  const getBadgeColor = (level: string) => {
+    const colors: Record<string, string> = {
+      Bronze: 'from-orange-900/50 to-orange-800/30 border-orange-500/50',
+      Silver: 'from-slate-400/50 to-slate-500/30 border-slate-400/50',
+      Gold: 'from-yellow-500/50 to-yellow-600/30 border-yellow-500/50',
+      Platinum: 'from-purple-500/50 to-purple-600/30 border-purple-500/50'
+    };
+    return colors[level] || colors.Bronze;
+  };
+
+  const getBadgeIcon = (level: string) => {
+    switch (level) {
+      case 'Platinum': return '💎';
+      case 'Gold': return '🥇';
+      case 'Silver': return '🥈';
+      default: return '🥉';
+    }
+  };
+
+  const achievements = [
+    { id: 1, name: 'First Mission', description: 'Complete your first task', icon: '🎯', progress: 100, total: 100, unlocked: true },
+    { id: 2, name: 'Speed Demon', description: 'Complete 5 tasks in one day', icon: '⚡', progress: 3, total: 5, unlocked: false },
+    { id: 3, name: 'Life Saver', description: 'Complete 10 critical missions', icon: '❤️', progress: 7, total: 10, unlocked: false },
+    { id: 4, name: 'Team Player', description: 'Help 5 colleagues', icon: '🤝', progress: 2, total: 5, unlocked: false },
+    { id: 5, name: 'Perfect Week', description: '7-day login streak', icon: '🔥', progress: streak, total: 7, unlocked: streak >= 7 },
+    { id: 6, name: 'Night Owl', description: 'Complete 20 night shift tasks', icon: '🦉', progress: 12, total: 20, unlocked: false },
+    { id: 7, name: 'Master Nurse', description: 'Reach 500 points', icon: '👑', progress: points, total: 500, unlocked: points >= 500 },
+    { id: 8, name: 'Compassion Award', description: 'Receive 10 patient thank-yous', icon: '💝', progress: 4, total: 10, unlocked: false }
+  ];
+
+  const leaderboard = [
+    { rank: 1, name: 'Sarah Johnson', points: 850, badge: 'Platinum', avatar: '👩‍⚕️' },
+    { rank: 2, name: 'Emily Davis', points: 720, badge: 'Gold', avatar: '👩‍⚕️' },
+    { rank: 3, name: 'Michael Brown', points: 680, badge: 'Gold', avatar: '👨‍⚕️' },
+    { rank: 4, name: user?.name || 'You', points: points, badge: badgeLevel, avatar: user?.avatar || '👤' },
+    { rank: 5, name: 'Jessica Wilson', points: 520, badge: 'Gold', avatar: '👩‍⚕️' },
+    { rank: 6, name: 'David Martinez', points: 480, badge: 'Silver', avatar: '👨‍⚕️' },
+    { rank: 7, name: 'Lisa Anderson', points: 420, badge: 'Silver', avatar: '👩‍⚕️' },
+    { rank: 8, name: 'James Taylor', points: 380, badge: 'Silver', avatar: '👨‍⚕️' }
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-semibold tracking-tight">Rewards & Achievements</h1>
+        <p className="text-slate-400 mt-2">Track your progress and earn recognition</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <Card className="rounded-2xl border border-white/10 bg-gradient-to-br from-blue-900/30 to-blue-800/20 backdrop-blur-xl shadow-lg shadow-black/30">
+          <CardHeader className="pb-3">
+            <p className="text-sm uppercase tracking-wide text-slate-400">Total Points</p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <Star className="w-8 h-8 text-yellow-400" />
+              <span className="text-4xl font-bold text-yellow-400">{points}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className={`rounded-2xl border backdrop-blur-xl shadow-lg shadow-black/30 bg-gradient-to-br ${getBadgeColor(badgeLevel)}`}>
+          <CardHeader className="pb-3">
+            <p className="text-sm uppercase tracking-wide text-slate-400">Current Badge</p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <span className="text-5xl">{getBadgeIcon(badgeLevel)}</span>
+              <span className="text-3xl font-bold">{badgeLevel}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-white/10 bg-gradient-to-br from-orange-900/30 to-orange-800/20 backdrop-blur-xl shadow-lg shadow-black/30">
+          <CardHeader className="pb-3">
+            <p className="text-sm uppercase tracking-wide text-slate-400">Login Streak</p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <Flame className="w-8 h-8 text-orange-400" />
+              <span className="text-4xl font-bold text-orange-400">{streak}</span>
+              <span className="text-sm text-slate-400">days</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border border-white/10 bg-gradient-to-br from-purple-900/30 to-purple-800/20 backdrop-blur-xl shadow-lg shadow-black/30">
+          <CardHeader className="pb-3">
+            <p className="text-sm uppercase tracking-wide text-slate-400">Achievements</p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-baseline gap-2">
+              <Trophy className="w-8 h-8 text-purple-400" />
+              <span className="text-4xl font-bold text-purple-400">
+                {achievements.filter(a => a.unlocked).length}
+              </span>
+              <span className="text-sm text-slate-400">/ {achievements.length}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div>
+        <h2 className="text-xl font-semibold mb-4">Achievements</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {achievements.map(achievement => (
+            <Card key={achievement.id} className={`rounded-2xl border backdrop-blur-xl shadow-lg shadow-black/30 ${
+              achievement.unlocked
+                ? 'border-yellow-500/50 bg-gradient-to-br from-yellow-900/30 to-yellow-800/20'
+                : 'border-white/10 bg-gradient-to-br from-slate-900 to-slate-800 opacity-60'
+            }`}>
+              <CardContent className="p-6 text-center">
+                <div className="text-5xl mb-3">{achievement.icon}</div>
+                <h3 className="font-semibold mb-1">{achievement.name}</h3>
+                <p className="text-xs text-slate-400 mb-3">{achievement.description}</p>
+                {achievement.unlocked ? (
+                  <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
+                    Unlocked!
+                  </Badge>
+                ) : (
+                  <div>
+                    <div className="w-full bg-slate-700 rounded-full h-2 mb-2">
+                      <div 
+                        className="h-2 rounded-full bg-blue-500"
+                        style={{ width: `${(achievement.progress / achievement.total) * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-400">
+                      {achievement.progress} / {achievement.total}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      <Card className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 to-slate-800 backdrop-blur-xl shadow-lg shadow-black/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5" />
+            Leaderboard
+          </CardTitle>
+          <CardDescription>Top performing nurses this month</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {leaderboard.map((entry) => {
+              const isCurrentUser = entry.name === user?.name;
+              return (
+                <div key={entry.rank} className={`p-4 rounded-xl border ${
+                  isCurrentUser 
+                    ? 'border-blue-500/50 bg-blue-500/10' 
+                    : 'border-white/10 bg-white/5'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg ${
+                        entry.rank === 1 ? 'bg-yellow-500/20 text-yellow-400' :
+                        entry.rank === 2 ? 'bg-slate-400/20 text-slate-300' :
+                        entry.rank === 3 ? 'bg-orange-500/20 text-orange-400' :
+                        'bg-white/10 text-slate-400'
+                      }`}>
+                        {entry.rank}
+                      </div>
+                      <span className="text-2xl">{entry.avatar}</span>
+                      <div>
+                        <p className="font-semibold">{entry.name}</p>
+                        <p className="text-sm text-slate-400">{entry.badge} Badge</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-yellow-400">{entry.points}</p>
+                      <p className="text-xs text-slate-400">points</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-900/20 to-blue-800/10 backdrop-blur-xl shadow-lg shadow-black/30">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-blue-400" />
+            How to Earn Points
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3 mb-2">
+                <Target className="w-5 h-5 text-blue-400" />
+                <p className="font-semibold">Complete Normal Tasks</p>
+              </div>
+              <p className="text-sm text-slate-400">+10 points per task</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3 mb-2">
+                <AlertTriangle className="w-5 h-5 text-red-400" />
+                <p className="font-semibold">Complete Critical Tasks</p>
+              </div>
+              <p className="text-sm text-slate-400">+20 points per task</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3 mb-2">
+                <Flame className="w-5 h-5 text-orange-400" />
+                <p className="font-semibold">Daily Login Streak</p>
+              </div>
+              <p className="text-sm text-slate-400">Bonus multiplier</p>
+            </div>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center gap-3 mb-2">
+                <Heart className="w-5 h-5 text-pink-400" />
+                <p className="font-semibold">Patient Feedback</p>
+              </div>
+              <p className="text-sm text-slate-400">+5 points per review</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
